@@ -11,6 +11,8 @@
 
 #define BUFSZ 1024
 
+// oi
+
 void usage(int argc, char **argv)
 {
   printf("usage %s <server IP> <server port>", argv[0]);
