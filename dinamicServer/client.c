@@ -11,7 +11,7 @@
 
 #define BUFSZ 1024
 
-// oi
+// oi de novo clei
 
 void usage(int argc, char **argv)
 {
