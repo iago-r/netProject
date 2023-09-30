@@ -11,11 +11,9 @@
 
 #define BUFSZ 1024
 
-// oi de novo clei
-
 void usage(int argc, char **argv)
 {
-  printf("usage %s <server IP> <server port>", argv[0]);
+  printf("usage %s <server IP> <server port>\n", argv[0]);
   printf("example: %s 127.0.0.1 51511\n", argv[0]);
   exit(EXIT_FAILURE);
 }
