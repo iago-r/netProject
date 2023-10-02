@@ -10,12 +10,34 @@
 
 #define BUFSZ 1024
 
+int GAME_STATE = 0; // 0 for off and 1 for on
+
+int answer[4][4] = { {1, 2, -1, 1},
+                    {1, -1, 2, 1}, 
+                    {1, 2, 1, 1}, 
+                    {0, 1, -1, 1}, };
+
+  // init state com todas as células ocultas
+int state[4][4]; /* = { {-2, -2, -2, -2},
+                      {-2, -2, -2, -2}, 
+                      {-2, -2, -2, -2}, 
+                      {-2, -2, -2, -2}, };*/
+
 struct action {
     int type;
     int coordinates[2];
     int board[4][4];
     char buf[BUFSZ];
 };
+void printBoard(struct action msg) ;
+
+void resetGameState(){
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+        state[i][j] = -2;
+        }
+    }
+}
 
 void usage(int argc, char **argv) {
     printf("usage: %s <v4|v6> <server port>\n", argv[0]);
@@ -70,22 +92,124 @@ int main(int argc, char **argv) {
     addrtostr(caddr, caddrstr, BUFSZ);
     printf("[log] connection from %s\n", caddrstr);
 
-    //char buf[BUFSZ];
     struct action msg;
     while(1) {
-        //bzero(buf, BUFSZ);
         bzero(&msg, sizeof(msg));
-        //recv(csock, buf, sizeof(buf),0);
         recv(csock, &msg, sizeof(msg),0);
-        //printf("From client: %s", buf);
-        printf("From client: %s", msg.buf);
+        //printf("From client: %s", msg.buf);
+        //printf("From client: Your action is: %i\n", msg.type);
+        if (msg.type == 1 || msg.type == 2 || msg.type == 3) {
+            printf("From client: Your action is: %i\nAnd your coordinates are: %i,%i\n", msg.type, msg.coordinates[0], msg.coordinates[1]);
+        } else {
+            printf("From client: Your action is: %i\n", msg.type);
+
+        }
         
-        //bzero(buf, BUFSZ);
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                printf("%i\t\t", answer[i][j]);
+            }
+            printf("\n");
+        }
+        
+        
+        int cell_value;
+        switch (msg.type) {
+            // CLIENT....................START
+            case 0:
+                if (GAME_STATE == 0) {
+                    GAME_STATE = 1;
+                    bzero(&msg, sizeof(msg));
+                    resetGameState();
+                }
+                msg.type = 3;
+                memcpy(msg.board, state, sizeof(state));
+                break;
+            
+            // CLIENT....................reveal [int],[int]
+            case 1:
+                if (GAME_STATE == 1 && state[msg.coordinates[0]][msg.coordinates[1]] == -2) {
+                    cell_value = answer[msg.coordinates[0]][msg.coordinates[1]];
+                    //printf("%i", cell_value);
+                    if (cell_value == -1) {
+                        //bzero(&msg, sizeof(msg));
+                        msg.type = 8;
+                        memcpy(msg.board, answer, sizeof(answer));
+                        GAME_STATE = 0;
+                        resetGameState();
+                    }
+                    else {
+                        state[msg.coordinates[0]][msg.coordinates[1]] = answer[msg.coordinates[0]][msg.coordinates[1]];
+                        msg.type = 3;
+                        memcpy(msg.board, state, sizeof(answer));
+                    }
+                    /* 
+                    bzero(&msg, sizeof(msg));
+                    msg.type = 3;
+                    resetGameState();
+                    memcpy(msg.board, state, sizeof(state)); */
+                }
+                break;
+            
+            // CLIENT....................flag [int],[int]
+            case 2:
+                if (GAME_STATE == 1) {
+                    if (state[msg.coordinates[0]][msg.coordinates[1]] != -2) {
+                        printf("error: cannot insert flag in revealed cell\n");
+                    }
+                    else if (state[msg.coordinates[0]][msg.coordinates[1]] == -3) {
+                        printf("error: cell already has a flag\n");
+                    }
+                    else
+                    {
+                        state[msg.coordinates[0]][msg.coordinates[1]] = -3;
+                        /* code */
+                    }
+                    
+                    msg.type = 3;
+                    memcpy(msg.board, state, sizeof(state));
+                    break;
+                }
+                
+                break;
+            
+            // CLIENT....................remove_flag [int],[int]
+            case 4:
+                /* code */
+                break;
+
+            // CLIENT....................reset
+            case 5:
+                printf("starting new game\n");
+                msg.type = 3;
+                resetGameState();
+                memcpy(msg.board, state, sizeof(answer));
+                GAME_STATE = 0;
+                break;
+            
+            // CLIENT....................exit
+            case 7:
+                /* code */
+                break;
+                
+/*             default:
+                if(i==9){printf("Invalid action.\n"); return 0;}
+                break; */
+        }
+        send(csock, &msg, sizeof(msg),0);
+
+        // if msg contains "Exit" then server exit and chat ended.
+        //if (strncmp("exit", buf, 4) == 0) {
+        if (strncmp("exit", msg.buf, 4) == 0) {
+            printf("Server Exit...\n");
+            break;
+        }
+
+
+/* 
         bzero(&msg, sizeof(msg));
         printf("To client: ");
-        //fgets(buf, BUFSZ - 1, stdin);
         fgets(msg.buf, BUFSZ - 1, stdin);
-        //send(csock, buf, sizeof(buf),0);
         send(csock, &msg, sizeof(msg),0);
    
         // if msg contains "Exit" then server exit and chat ended.
@@ -93,11 +217,20 @@ int main(int argc, char **argv) {
         if (strncmp("exit", msg.buf, 4) == 0) {
             printf("Server Exit...\n");
             break;
-        }
+        } */
     }
 
 
 
 
     exit(EXIT_SUCCESS);
+}
+
+void printBoard(struct action msg) {
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            printf("%i\t\t", msg.board[i][j]);
+        }
+        printf("\n");
+    }
 }
