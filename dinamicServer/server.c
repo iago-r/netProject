@@ -63,7 +63,6 @@ int main(int argc, char **argv) {
     addrtostr(caddr, caddrstr, BUFSZ);
     printf("[log] connection from %s\n", caddrstr);
 
-
     char buf[BUFSZ];
     while(1) {
         bzero(buf, BUFSZ);
