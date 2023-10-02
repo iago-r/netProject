@@ -9,13 +9,21 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
+#define BUFSZ 1024
+
+struct action {
+    int type;
+    int coordinates[2];
+    int board[4][4];
+    char buf[BUFSZ];
+};
+
 void usage(int argc, char **argv) {
     printf("usage %s <server IP> <server port>\n", argv[0]);
     printf("example: %s 127.0.0.1 51511\n", argv[0]);
     exit(EXIT_FAILURE);
 }
 
-#define BUFSZ 1024
 
 int main(int argc, char **argv) {
     if (argc < 3) {
@@ -43,17 +51,25 @@ int main(int argc, char **argv) {
     
     printf("connected to %s\n", addrstr);
 
-    char buf[BUFSZ];
+    //char buf[BUFSZ];
+    struct action msg;
     while (1) {
-        bzero(buf, sizeof(buf));
+        //bzero(buf, sizeof(buf));
+        bzero(&msg, sizeof(msg));
         printf("Enter the string : ");
-        fgets(buf, BUFSZ - 1, stdin);
-        send(s, buf, sizeof(buf), 0);
+        //fgets(buf, BUFSZ - 1, stdin);
+        fgets(msg.buf, BUFSZ - 1, stdin);
+        //send(s, buf, sizeof(buf), 0);
+        send(s, &msg, sizeof(msg), 0);
 
-        bzero(buf, sizeof(buf));
-        recv(s, buf, sizeof(buf), 0);
-        printf("From Server : %s", buf);
-        if ((strncmp(buf, "exit", 4)) == 0) {
+        //bzero(buf, sizeof(buf));
+        bzero(&msg, sizeof(msg));
+        //recv(s, buf, sizeof(buf), 0);
+        recv(s, &msg, sizeof(msg), 0);
+        //printf("From Server : %s", buf);
+        printf("From Server: %s", msg.buf);
+        //if ((strncmp(buf, "exit", 4)) == 0) {
+        if ((strncmp(msg.buf, "exit", 4)) == 0) {
             printf("Client Exit...\n");
             break;
         }

@@ -10,6 +10,13 @@
 
 #define BUFSZ 1024
 
+struct action {
+    int type;
+    int coordinates[2];
+    int board[4][4];
+    char buf[BUFSZ];
+};
+
 void usage(int argc, char **argv) {
     printf("usage: %s <v4|v6> <server port>\n", argv[0]);
     printf("example: %s v4 51511\n", argv[0]);
@@ -63,19 +70,27 @@ int main(int argc, char **argv) {
     addrtostr(caddr, caddrstr, BUFSZ);
     printf("[log] connection from %s\n", caddrstr);
 
-    char buf[BUFSZ];
+    //char buf[BUFSZ];
+    struct action msg;
     while(1) {
-        bzero(buf, BUFSZ);
-        recv(csock, buf, sizeof(buf),0);
-        printf("From client: %s", buf);
-        bzero(buf, BUFSZ);
-
-        printf("To client : ");
-        fgets(buf, BUFSZ - 1, stdin);
-        send(csock, buf, sizeof(buf),0);
+        //bzero(buf, BUFSZ);
+        bzero(&msg, sizeof(msg));
+        //recv(csock, buf, sizeof(buf),0);
+        recv(csock, &msg, sizeof(msg),0);
+        //printf("From client: %s", buf);
+        printf("From client: %s", msg.buf);
+        
+        //bzero(buf, BUFSZ);
+        bzero(&msg, sizeof(msg));
+        printf("To client: ");
+        //fgets(buf, BUFSZ - 1, stdin);
+        fgets(msg.buf, BUFSZ - 1, stdin);
+        //send(csock, buf, sizeof(buf),0);
+        send(csock, &msg, sizeof(msg),0);
    
         // if msg contains "Exit" then server exit and chat ended.
-        if (strncmp("exit", buf, 4) == 0) {
+        //if (strncmp("exit", buf, 4) == 0) {
+        if (strncmp("exit", msg.buf, 4) == 0) {
             printf("Server Exit...\n");
             break;
         }
