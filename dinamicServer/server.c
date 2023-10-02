@@ -45,38 +45,6 @@ int main(int argc, char **argv) {
     if (0 != listen(s, 10)) { // quantidade de conexões que podem estar pendentes para tratamento
         logexit("listen");
     }
-/* 
-    char addrstr[BUFSZ];
-    addrtostr(addr, addrstr, BUFSZ);
-    printf("bound to %s, waiting connection\n", addrstr);
-
-    while (1) {
-        struct sockaddr_storage cstorage;
-        struct sockaddr *caddr = (struct sockaddr *)(&cstorage);
-        socklen_t caddrlen = sizeof(cstorage);
-
-        int csock = accept(s, caddr, &caddrlen);
-        if (csock == -1) {
-            logexit("accept");
-        }
-
-        char caddrstr[BUFSZ];
-        addrtostr(caddr, caddrstr, BUFSZ);
-        printf("[log] connection from %s\n", caddrstr);
-
-        char buf[BUFSZ];
-        memset(buf, 0, BUFSZ);
-        size_t count = recv(csock, buf, BUFSZ, 0);
-        printf("[msg] %s, %d bytes: %s\n", caddrstr, (int)count, buf);
-
-        sprintf(buf, "remote endpoint: %.1000s\n", caddrstr);
-        count = send(csock, buf, strlen(buf) + 1, 0);
-        if (count != strlen(buf) + 1) {
-            logexit("send");
-        }
-        close(csock);
-    }
- */
 
     char addrstr[BUFSZ];
     addrtostr(addr, addrstr, BUFSZ);
@@ -97,22 +65,15 @@ int main(int argc, char **argv) {
 
 
     char buf[BUFSZ];
-    int n;
-    // infinite loop for chat
-    for (;;) {
+    while(1) {
         bzero(buf, BUFSZ);
-   
-        // read the message from client and copy it in buffer
-        read(csock, buf, sizeof(buf));
-        // print buffer which contains the client contents
-        printf("From client: %s\t To client : ", buf);
+        recv(csock, buf, sizeof(buf),0);
+        printf("From client: %s", buf);
         bzero(buf, BUFSZ);
-        n = 0;
-        // copy server message in the buffer
-        while ((buf[n++] = getchar()) != '\n');
-   
-        // and send that buffer to client
-        write(csock, buf, sizeof(buf));
+
+        printf("To client : ");
+        fgets(buf, BUFSZ - 1, stdin);
+        send(csock, buf, sizeof(buf),0);
    
         // if msg contains "Exit" then server exit and chat ended.
         if (strncmp("exit", buf, 4) == 0) {

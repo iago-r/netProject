@@ -43,45 +43,15 @@ int main(int argc, char **argv) {
     
     printf("connected to %s\n", addrstr);
 
-
-/* 
     char buf[BUFSZ];
-    memset(buf, 0, BUFSZ);
-    printf("mensagem> ");
-    fgets(buf, BUFSZ - 1, stdin);
-    size_t count = send(s, buf, strlen(buf) + 1, 0);
-    if (count != strlen(buf) + 1) {
-        logexit("send");
-    }
-
-    memset(buf, 0, BUFSZ);
-    unsigned total = 0;
     while (1) {
-        count = recv(s, buf + total, BUFSZ - total, 0);
-        if (count == 0) {
-            // Conection terminated
-            break;
-        }
-        total += count;
-    }
-    close(s);
-
-    printf("received %d bytes\n", total);
-    puts(buf);
- */
-
-
-
-    char buf[BUFSZ];
-    int n;
-    for (;;) {
         bzero(buf, sizeof(buf));
         printf("Enter the string : ");
-        n = 0;
-        while ((buf[n++] = getchar()) != '\n');
-        write(s, buf, sizeof(buf));
+        fgets(buf, BUFSZ - 1, stdin);
+        send(s, buf, sizeof(buf), 0);
+
         bzero(buf, sizeof(buf));
-        read(s, buf, sizeof(buf));
+        recv(s, buf, sizeof(buf), 0);
         printf("From Server : %s", buf);
         if ((strncmp(buf, "exit", 4)) == 0) {
             printf("Client Exit...\n");
@@ -89,7 +59,6 @@ int main(int argc, char **argv) {
         }
     }
     close(s);
-
 
     exit(EXIT_SUCCESS);
 }
