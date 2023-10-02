@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
     if (0 != listen(s, 10)) { // quantidade de conexões que podem estar pendentes para tratamento
         logexit("listen");
     }
-
+/* 
     char addrstr[BUFSZ];
     addrtostr(addr, addrstr, BUFSZ);
     printf("bound to %s, waiting connection\n", addrstr);
@@ -76,6 +76,53 @@ int main(int argc, char **argv) {
         }
         close(csock);
     }
+ */
+
+    char addrstr[BUFSZ];
+    addrtostr(addr, addrstr, BUFSZ);
+    printf("bound to %s, waiting connection\n", addrstr);
+
+    struct sockaddr_storage cstorage;
+    struct sockaddr *caddr = (struct sockaddr *)(&cstorage);
+    socklen_t caddrlen = sizeof(cstorage);
+
+    int csock = accept(s, caddr, &caddrlen);
+    if (csock == -1) {
+        logexit("accept");
+    }
+
+    char caddrstr[BUFSZ];
+    addrtostr(caddr, caddrstr, BUFSZ);
+    printf("[log] connection from %s\n", caddrstr);
+
+
+    char buf[BUFSZ];
+    int n;
+    // infinite loop for chat
+    for (;;) {
+        bzero(buf, BUFSZ);
+   
+        // read the message from client and copy it in buffer
+        read(csock, buf, sizeof(buf));
+        // print buffer which contains the client contents
+        printf("From client: %s\t To client : ", buf);
+        bzero(buf, BUFSZ);
+        n = 0;
+        // copy server message in the buffer
+        while ((buf[n++] = getchar()) != '\n');
+   
+        // and send that buffer to client
+        write(csock, buf, sizeof(buf));
+   
+        // if msg contains "Exit" then server exit and chat ended.
+        if (strncmp("exit", buf, 4) == 0) {
+            printf("Server Exit...\n");
+            break;
+        }
+    }
+
+
+
 
     exit(EXIT_SUCCESS);
 }

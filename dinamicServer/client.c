@@ -43,6 +43,8 @@ int main(int argc, char **argv) {
     
     printf("connected to %s\n", addrstr);
 
+
+/* 
     char buf[BUFSZ];
     memset(buf, 0, BUFSZ);
     printf("mensagem> ");
@@ -56,7 +58,6 @@ int main(int argc, char **argv) {
     unsigned total = 0;
     while (1) {
         count = recv(s, buf + total, BUFSZ - total, 0);
-        // MEU PROGRAMA QUITA AQUI E NÃO RECEBE BYTES
         if (count == 0) {
             // Conection terminated
             break;
@@ -67,6 +68,28 @@ int main(int argc, char **argv) {
 
     printf("received %d bytes\n", total);
     puts(buf);
+ */
+
+
+
+    char buf[BUFSZ];
+    int n;
+    for (;;) {
+        bzero(buf, sizeof(buf));
+        printf("Enter the string : ");
+        n = 0;
+        while ((buf[n++] = getchar()) != '\n');
+        write(s, buf, sizeof(buf));
+        bzero(buf, sizeof(buf));
+        read(s, buf, sizeof(buf));
+        printf("From Server : %s", buf);
+        if ((strncmp(buf, "exit", 4)) == 0) {
+            printf("Client Exit...\n");
+            break;
+        }
+    }
+    close(s);
+
 
     exit(EXIT_SUCCESS);
 }
