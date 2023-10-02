@@ -31,12 +31,12 @@ int main(int argc, char **argv) {
     if (s == -1) {
         logexit("socket");
     }
-/* 
+
     int enable = 1;
     if(0 != setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int))) {
         logexit("setsockopt");
     }
- */
+
     struct sockaddr *addr = (struct sockaddr *)(&storage);
     if (0 != bind(s, addr, sizeof(storage))) {
         logexit("bind");
