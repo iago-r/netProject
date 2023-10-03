@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
     struct sockaddr_storage cstorage;
     struct sockaddr *caddr = (struct sockaddr *)(&cstorage);
     socklen_t caddrlen = sizeof(cstorage);
-
+/* 
     int csock = accept(s, caddr, &caddrlen);
     if (csock == -1) {
         logexit("accept");
@@ -92,109 +92,124 @@ int main(int argc, char **argv) {
     printf("[log] connection from %s\n", caddrstr);
 
     struct action msg;
-    int cellsToReveal = countNoBombCells(answer);
-    while(1) {
-        bzero(&msg, sizeof(msg));
-        recv(csock, &msg, sizeof(msg),0);
+    int cellsToReveal = countNoBombCells(answer); */
 
+    int csock;
+    char caddrstr[BUFSZ];
+    struct action msg;
+    int cellsToReveal, cell_value;
+    
+    while (1) {
+        csock = accept(s, caddr, &caddrlen);
+        if (csock == -1) {logexit("accept");}
 
-        if (msg.type == 1 || msg.type == 2 || msg.type == 3) {
-            printf("From client: Your action is: %i\n\tAnd your coordinates are: %i,%i\n", msg.type, msg.coordinates[0], msg.coordinates[1]);
-        } else {
-            printf("From client: Your action is: %i\n", msg.type);
-        }
-        printf("There are, still, %i no bomb cells\n", cellsToReveal);
+        addrtostr(caddr, caddrstr, BUFSZ);
+        printf("[log] connection from %s\n", caddrstr);
         
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                printf("%i\t\t", answer[i][j]);
+        cellsToReveal = countNoBombCells(answer);
+        while(1) {
+            bzero(&msg, sizeof(msg));
+            recv(csock, &msg, sizeof(msg),0);
+            /*
+            if (msg.type == 1 || msg.type == 2 || msg.type == 3) {
+                printf("From client: Your action is: %i\n\tAnd your coordinates are: %i,%i\n", msg.type, msg.coordinates[0], msg.coordinates[1]);
+            } else {
+                printf("From client: Your action is: %i\n", msg.type);
             }
-            printf("\n");
-        }
-        
-        
-        int cell_value;
-        switch (msg.type) {
-            // CLIENT....................START
-            case 0:
-                if (GAME_INITIALIZED == 0 && PLAYER_STATE == 0) {
-                    GAME_INITIALIZED = 1;
-                    bzero(&msg, sizeof(msg));
-                    resetGameState();
+            printf("There are, still, %i no bomb cells\n", cellsToReveal);
+            for (int i = 0; i < 4; i++) {
+                for (int j = 0; j < 4; j++) {
+                    printf("%i\t\t", answer[i][j]);
                 }
-                msg.type = 3;
-                memcpy(msg.board, state, sizeof(state));
-                break;
-            
-            // CLIENT....................reveal [int],[int]
-            case 1:
-                if (GAME_INITIALIZED == 1 && state[msg.coordinates[0]][msg.coordinates[1]] == -2) {
-                    cell_value = answer[msg.coordinates[0]][msg.coordinates[1]];
-                    //printf("%i", cell_value);
-                    if (cell_value == -1) {
-                        //bzero(&msg, sizeof(msg));
-                        msg.type = 8;
-                        memcpy(msg.board, answer, sizeof(answer));
-                        GAME_INITIALIZED = 0;
-                        PLAYER_STATE = 1;
+                printf("\n");
+            }
+            */
+
+            switch (msg.type) {
+                // CLIENT....................START
+                case 0:
+                    if (GAME_INITIALIZED == 0 && PLAYER_STATE == 0) {
+                        GAME_INITIALIZED = 1;
+                        bzero(&msg, sizeof(msg));
                         resetGameState();
                     }
-                    else {
-                        state[msg.coordinates[0]][msg.coordinates[1]] = answer[msg.coordinates[0]][msg.coordinates[1]];
-                        cellsToReveal--;
-                        if (cellsToReveal == 0) {
-                            msg.type = 6;
+                    msg.type = 3;
+                    memcpy(msg.board, state, sizeof(state));
+                    break;
+                
+                // CLIENT....................reveal [int],[int]
+                case 1:
+                    if (GAME_INITIALIZED == 1 && state[msg.coordinates[0]][msg.coordinates[1]] == -2) {
+                        cell_value = answer[msg.coordinates[0]][msg.coordinates[1]];
+                        //printf("%i", cell_value);
+                        if (cell_value == -1) {
+                            //bzero(&msg, sizeof(msg));
+                            msg.type = 8;
+                            memcpy(msg.board, answer, sizeof(answer));
+                            GAME_INITIALIZED = 0;
+                            PLAYER_STATE = 1;
+                            resetGameState();
                         }
                         else {
-                            msg.type = 3;
+                            state[msg.coordinates[0]][msg.coordinates[1]] = answer[msg.coordinates[0]][msg.coordinates[1]];
+                            cellsToReveal--;
+                            if (cellsToReveal == 0) {
+                                msg.type = 6;
+                            }
+                            else {
+                                msg.type = 3;
+                            }
+                            memcpy(msg.board, state, sizeof(answer));
                         }
-                        memcpy(msg.board, state, sizeof(answer));
+                        /* 
+                        bzero(&msg, sizeof(msg));
+                        msg.type = 3;
+                        resetGameState();
+                        memcpy(msg.board, state, sizeof(state)); */
                     }
-                    /* 
-                    bzero(&msg, sizeof(msg));
+                    break;
+                
+                // CLIENT....................flag [int],[int]
+                case 2:
+                    if (GAME_INITIALIZED == 1 &&
+                        state[msg.coordinates[0]][msg.coordinates[1]] == -2) { // cell not revealed or 
+                            state[msg.coordinates[0]][msg.coordinates[1]] = -3;
+                        }
+                    msg.type = 3;
+                    memcpy(msg.board, state, sizeof(state));             
+                    break;
+                
+                // DANDO PAU! O STRCMP NÃO DETECTA A FUNCAO REMOVE_FLAG DA LISTA E RETORNA -1
+                // CLIENT....................remove_flag [int],[int]
+                case 4:
+                    if (GAME_INITIALIZED == 1 &&
+                        state[msg.coordinates[0]][msg.coordinates[1]] == -3) { // cell not revealed or 
+                            state[msg.coordinates[0]][msg.coordinates[1]] = -2;
+                        }
+                    msg.type = 3;
+                    memcpy(msg.board, state, sizeof(state));             
+                    break;
+
+                // CLIENT....................reset
+                case 5:
+                    printf("starting new game\n");
                     msg.type = 3;
                     resetGameState();
-                    memcpy(msg.board, state, sizeof(state)); */
-                }
-                break;
-            
-            // CLIENT....................flag [int],[int]
-            case 2:
-                if (GAME_INITIALIZED == 1 &&
-                    state[msg.coordinates[0]][msg.coordinates[1]] == -2) { // cell not revealed or 
-                        state[msg.coordinates[0]][msg.coordinates[1]] = -3;
-                    }
-                msg.type = 3;
-                memcpy(msg.board, state, sizeof(state));             
-                break;
-            
-            // DANDO PAU! O STRCMP NÃO DETECTA A FUNCAO REMOVE_FLAG DA LISTA E RETORNA -1
-            // CLIENT....................remove_flag [int],[int]
-            case 4:
-                if (GAME_INITIALIZED == 1 &&
-                    state[msg.coordinates[0]][msg.coordinates[1]] == -3) { // cell not revealed or 
-                        state[msg.coordinates[0]][msg.coordinates[1]] = -2;
-                    }
-                msg.type = 3;
-                memcpy(msg.board, state, sizeof(state));             
-                break;
-
-            // CLIENT....................reset
-            case 5:
-                printf("starting new game\n");
-                msg.type = 3;
-                resetGameState();
-                memcpy(msg.board, state, sizeof(answer));
-                GAME_INITIALIZED = 0;
-                PLAYER_STATE = 0;
-                break;
-            
-            // CLIENT....................exit
-            case 7:
+                    memcpy(msg.board, state, sizeof(answer));
+                    GAME_INITIALIZED = 0;
+                    PLAYER_STATE = 0;
+                    break;
+                
+                // CLIENT....................exit
+                case 7:
+                    break;
+            }
+            send(csock, &msg, sizeof(msg),0);
+            if (msg.type ==  7) {
                 printf("client disconnected\n");
                 break;
+            }
         }
-        send(csock, &msg, sizeof(msg),0);
     }
     close(csock);
     exit(EXIT_SUCCESS);
@@ -221,4 +236,4 @@ void printBoard(struct action msg) {
     }
 }
 
-// SE O CLIENT QUITA O SERVER CAI, MAS SE O SERVER QUITA O CLIENT N
+// SE O CLIENT QUITA O SERVER CAI, MAS SE O SERVER QUITA O CLIENT Nz
