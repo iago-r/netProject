@@ -20,6 +20,8 @@ int answer[4][4] = { {1, 2, -1, 1},
 
 int state[4][4];
 
+int countNoBombCells(int answer[4][4]);
+
 struct action {
     int type;
     int coordinates[2];
@@ -90,25 +92,26 @@ int main(int argc, char **argv) {
     printf("[log] connection from %s\n", caddrstr);
 
     struct action msg;
+    int cellsToReveal = countNoBombCells(answer);
     while(1) {
         bzero(&msg, sizeof(msg));
         recv(csock, &msg, sizeof(msg),0);
-        //printf("From client: %s", msg.buf);
-        //printf("From client: Your action is: %i\n", msg.type);
+
+
         if (msg.type == 1 || msg.type == 2 || msg.type == 3) {
             printf("From client: Your action is: %i\n\tAnd your coordinates are: %i,%i\n", msg.type, msg.coordinates[0], msg.coordinates[1]);
         } else {
             printf("From client: Your action is: %i\n", msg.type);
-
         }
-/*         
+        printf("There are, still, %i no bomb cells\n", cellsToReveal);
+        
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
                 printf("%i\t\t", answer[i][j]);
             }
             printf("\n");
         }
-         */
+        
         
         int cell_value;
         switch (msg.type) {
@@ -138,7 +141,13 @@ int main(int argc, char **argv) {
                     }
                     else {
                         state[msg.coordinates[0]][msg.coordinates[1]] = answer[msg.coordinates[0]][msg.coordinates[1]];
-                        msg.type = 3;
+                        cellsToReveal--;
+                        if (cellsToReveal == 0) {
+                            msg.type = 6;
+                        }
+                        else {
+                            msg.type = 3;
+                        }
                         memcpy(msg.board, state, sizeof(answer));
                     }
                     /* 
@@ -185,32 +194,22 @@ int main(int argc, char **argv) {
                 printf("client disconnected\n");
                 break;
         }
-
         send(csock, &msg, sizeof(msg),0);
-
-        if(msg.type == 7) {
-            close(csock);
-            break; // closes the server, dont want that
-        }
-
-/* 
-        bzero(&msg, sizeof(msg));
-        printf("To client: ");
-        fgets(msg.buf, BUFSZ - 1, stdin);
-        send(csock, &msg, sizeof(msg),0);
-   
-        // if msg contains "Exit" then server exit and chat ended.
-        //if (strncmp("exit", buf, 4) == 0) {
-        if (strncmp("exit", msg.buf, 4) == 0) {
-            printf("Server Exit...\n");
-            break;
-        } */
     }
-
-
-
-
+    close(csock);
     exit(EXIT_SUCCESS);
+}
+
+int countNoBombCells(int answer[4][4]) {
+    int counter = 0;
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            if (answer[i][j] >= 0) {
+                counter++;
+            }
+        }
+    }
+    return counter;
 }
 
 void printBoard(struct action msg) {

@@ -19,11 +19,12 @@ struct action {
 };
 
 int previous_state[4][4];
+int EXIT_STATE = 0;
 
 void resetPreviousState();
 int detectType();
 void printBoard(struct action msg);
-void commandParse(struct action *msg);
+int commandParse(struct action *msg);
 void actionResultParse(struct action *msg);
 
 void usage(int argc, char **argv) {
@@ -63,7 +64,7 @@ int main(int argc, char **argv) {
     while (1) {
         bzero(&msg.type, sizeof(msg.type));
         bzero(&msg.coordinates, sizeof(msg.coordinates));
-        commandParse(&msg);
+        EXIT_STATE = commandParse(&msg);
         send(s, &msg, sizeof(msg), 0);
 
         bzero(&msg.type, sizeof(msg.type));
@@ -71,10 +72,9 @@ int main(int argc, char **argv) {
         recv(s, &msg, sizeof(msg), 0);
         actionResultParse(&msg);
         memcpy(previous_state, msg.board, sizeof(msg.board));       
-/*         if ((strncmp(msg.buf, "exit", 4)) == 0) {
-            printf("Client Exit...\n");
+        if (EXIT_STATE == 1) {
             break;
-        } */
+        }
     }
     close(s);
     exit(EXIT_SUCCESS);
@@ -104,7 +104,7 @@ int detectType() {
     return -1;
 }       
 
-void commandParse(struct action *msg) {
+int commandParse(struct action *msg) {
 
     int valid_command;
 
@@ -141,7 +141,11 @@ void commandParse(struct action *msg) {
                 valid_command = 0;
             }
         }
+        else if (msg->type == 7) {
+            return 1;
+        }
     } while (valid_command == 0);
+    return 0;
     
 /*     do {
         // PROMPT USER.................................................command
@@ -181,7 +185,7 @@ void commandParse(struct action *msg) {
         }
 
     } while (valid_command == 0); */
-    
+
 }
 
 void printBoard(struct action msg) {
@@ -214,12 +218,12 @@ void printBoard(struct action msg) {
 
 void actionResultParse(struct action *msg) {
     switch (msg->type) {
-        // SERVER....................state
+        // SERVER.........................state
         case 3:
             printBoard(*msg);
             break;
 
-        // SERVER....................win
+        // SERVER..........................win
         case 6:
             printf("YOU WIN!\n");
             printBoard(*msg);
