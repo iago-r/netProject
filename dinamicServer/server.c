@@ -10,7 +10,8 @@
 
 #define BUFSZ 1024
 
-int GAME_STATE = 0; // 0 for off and 1 for on
+int GAME_INITIALIZED = 0; // 0 for no and 1 for yes
+int PLAYER_STATE = 0; // 0 for not losing and 1 for lose
 
 int answer[4][4] = { {1, 2, -1, 1},
                     {1, -1, 2, 1}, 
@@ -117,8 +118,8 @@ int main(int argc, char **argv) {
         switch (msg.type) {
             // CLIENT....................START
             case 0:
-                if (GAME_STATE == 0) {
-                    GAME_STATE = 1;
+                if (GAME_INITIALIZED == 0 && PLAYER_STATE == 0) {
+                    GAME_INITIALIZED = 1;
                     bzero(&msg, sizeof(msg));
                     resetGameState();
                 }
@@ -128,14 +129,15 @@ int main(int argc, char **argv) {
             
             // CLIENT....................reveal [int],[int]
             case 1:
-                if (GAME_STATE == 1 && state[msg.coordinates[0]][msg.coordinates[1]] == -2) {
+                if (GAME_INITIALIZED == 1 && state[msg.coordinates[0]][msg.coordinates[1]] == -2) {
                     cell_value = answer[msg.coordinates[0]][msg.coordinates[1]];
                     //printf("%i", cell_value);
                     if (cell_value == -1) {
                         //bzero(&msg, sizeof(msg));
                         msg.type = 8;
                         memcpy(msg.board, answer, sizeof(answer));
-                        GAME_STATE = 0;
+                        GAME_INITIALIZED = 0;
+                        PLAYER_STATE = 1;
                         resetGameState();
                     }
                     else {
@@ -153,29 +155,23 @@ int main(int argc, char **argv) {
             
             // CLIENT....................flag [int],[int]
             case 2:
-                if (GAME_STATE == 1) {
-                    if (state[msg.coordinates[0]][msg.coordinates[1]] != -2) {
-                        printf("error: cannot insert flag in revealed cell\n");
-                    }
-                    else if (state[msg.coordinates[0]][msg.coordinates[1]] == -3) {
-                        printf("error: cell already has a flag\n");
-                    }
-                    else
-                    {
+                if (GAME_INITIALIZED == 1 &&
+                    state[msg.coordinates[0]][msg.coordinates[1]] == -2) { // cell not revealed or 
                         state[msg.coordinates[0]][msg.coordinates[1]] = -3;
-                        /* code */
                     }
-                    
-                    msg.type = 3;
-                    memcpy(msg.board, state, sizeof(state));
-                    break;
-                }
-                
+                msg.type = 3;
+                memcpy(msg.board, state, sizeof(state));             
                 break;
             
+            // DANDO PAU! O STRCMP NÃO DETECTA A FUNCAO REMOVE_FLAG DA LISTA E RETORNA -1
             // CLIENT....................remove_flag [int],[int]
             case 4:
-                /* code */
+                if (GAME_INITIALIZED == 1 &&
+                    state[msg.coordinates[0]][msg.coordinates[1]] == -3) { // cell not revealed or 
+                        state[msg.coordinates[0]][msg.coordinates[1]] = -2;
+                    }
+                msg.type = 3;
+                memcpy(msg.board, state, sizeof(state));             
                 break;
 
             // CLIENT....................reset
@@ -184,27 +180,21 @@ int main(int argc, char **argv) {
                 msg.type = 3;
                 resetGameState();
                 memcpy(msg.board, state, sizeof(answer));
-                GAME_STATE = 0;
+                GAME_INITIALIZED = 0;
+                PLAYER_STATE = 0;
                 break;
             
             // CLIENT....................exit
             case 7:
-                /* code */
+                printf("client disconnected\n");
                 break;
-                
-/*             default:
-                if(i==9){printf("Invalid action.\n"); return 0;}
-                break; */
         }
+
         send(csock, &msg, sizeof(msg),0);
 
-        // if msg contains "Exit" then server exit and chat ended.
-        //if (strncmp("exit", buf, 4) == 0) {
-        if (strncmp("exit", msg.buf, 4) == 0) {
-            printf("Server Exit...\n");
-            break;
+        if(msg.type == 7) {
+            close(csock);
         }
-
 
 /* 
         bzero(&msg, sizeof(msg));
