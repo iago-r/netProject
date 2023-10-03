@@ -81,30 +81,19 @@ int main(int argc, char **argv) {
     struct sockaddr_storage cstorage;
     struct sockaddr *caddr = (struct sockaddr *)(&cstorage);
     socklen_t caddrlen = sizeof(cstorage);
-/* 
-    int csock = accept(s, caddr, &caddrlen);
-    if (csock == -1) {
-        logexit("accept");
-    }
-
-    char caddrstr[BUFSZ];
-    addrtostr(caddr, caddrstr, BUFSZ);
-    printf("[log] connection from %s\n", caddrstr);
-
-    struct action msg;
-    int cellsToReveal = countNoBombCells(answer); */
 
     int csock;
-    char caddrstr[BUFSZ];
     struct action msg;
     int cellsToReveal, cell_value;
     
     while (1) {
         csock = accept(s, caddr, &caddrlen);
-        if (csock == -1) {logexit("accept");}
-
-        addrtostr(caddr, caddrstr, BUFSZ);
-        printf("[log] connection from %s\n", caddrstr);
+        if (csock == -1) {
+            logexit("accept");
+        }
+        else {
+            printf("client connected\n");
+        }
         
         cellsToReveal = countNoBombCells(answer);
         while(1) {

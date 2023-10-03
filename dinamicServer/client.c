@@ -54,11 +54,6 @@ int main(int argc, char **argv) {
         logexit("connect");
     }
 
-    char addrstr[BUFSZ];
-    addrtostr(addr, addrstr, BUFSZ);
-    
-    printf("connected to %s\n", addrstr);
-
     struct action msg;
     resetPreviousState();
     while (1) {
@@ -146,46 +141,6 @@ int commandParse(struct action *msg) {
         }
     } while (valid_command == 0);
     return 0;
-    
-/*     do {
-        // PROMPT USER.................................................command
-        do {
-            msg->type = detectType();
-            if(msg->type == -1) {printf("error: command not found\n");}
-        } while (msg->type == -1);
-
-        // PROMPT USER.............................................coordinates
-        if (msg->type == 1 || msg->type == 2 || msg->type == 3) {
-            scanf("%i,%i", &msg->coordinates[0], &msg->coordinates[1]);
-            
-            // CHECK FOR A REVEAL OUTSIDE OF THE RANGE.............................
-            if (!((msg->coordinates[0] >= 0 && msg->coordinates[0] <= 3) &&
-                (msg->coordinates[1] >= 0 && msg->coordinates[1] <= 3))) {
-                printf("error: invalid cell\n");
-                valid_command = 0;
-            }
-
-            // CHECK FOR A REVEAL IN CELL REVEALED.................................
-            else if (msg->type == 1 &&
-                previous_state[msg->coordinates[0]][msg->coordinates[1]] >= 0) {
-                printf("error: cell already revealed\n");
-                valid_command = 0;
-            }
-
-            // CHECK FOR A FLAG IN A FLAGGED CELL..................................
-            else if (msg->type == 2) {
-                if (previous_state[msg->coordinates[0]][msg->coordinates[1]] == -3) {
-                    printf("error: cell already has a flag\n");
-                    valid_command = 0;
-                } else if (previous_state[msg->coordinates[0]][msg->coordinates[1]] >= 0) {
-                    printf("error: cannot insert flag in revealed cell\n");
-                    valid_command = 0;
-                }
-            }
-        }
-
-    } while (valid_command == 0); */
-
 }
 
 void printBoard(struct action msg) {
@@ -235,10 +190,5 @@ void actionResultParse(struct action *msg) {
             printBoard(*msg);
             break;
     }
-/* 
-    if ((strncmp(msg->buf, "exit", 4)) == 0) {
-        printf("Client Exit...\n");
-        break;
-    } */
 }
 
