@@ -18,10 +18,7 @@ struct action {
     char buf[BUFSZ];
 };
 
-int current_state[4][4]; /* = { {-2, -2, -2, -2},
-                      {-2, -2, -2, -2}, 
-                      {-2, -2, -2, -2}, 
-                      {-2, -2, -2, -2}, };*/
+int previous_state[4][4];
 
 void usage(int argc, char **argv) {
     printf("usage %s <server IP> <server port>\n", argv[0]);
@@ -31,6 +28,7 @@ void usage(int argc, char **argv) {
 
 int detectType();
 void printBoard(struct action msg);
+void commandParse(struct action *msg);
 
 int main(int argc, char **argv) {
     if (argc < 3) {
@@ -60,32 +58,14 @@ int main(int argc, char **argv) {
 
     struct action msg;
     while (1) {
-        //bzero(&msg, sizeof(msg));
         bzero(&msg.type, sizeof(msg.type));
         bzero(&msg.coordinates, sizeof(msg.coordinates));
-        printf("> ");
-        //fgets(msg.buf, BUFSZ - 1, stdin);
-        //scanf("%s", msg.buf);
-//====================================================================//
-        msg.type = detectType();
-        if (msg.type == 1 || msg.type == 2 || msg.type == 3) {
-            scanf("%i,%i", &msg.coordinates[0], &msg.coordinates[1]);
-        }
-        
-
-       // if
-
-
-
-
-//====================================================================//
+        commandParse(&msg);
         send(s, &msg, sizeof(msg), 0);
 
-        //bzero(&msg, sizeof(msg));
         bzero(&msg.type, sizeof(msg.type));
         bzero(&msg.coordinates, sizeof(msg.coordinates));
         recv(s, &msg, sizeof(msg), 0);
-        //memcpy(current_state, msg.board, sizeof(msg.board));
         
         switch (msg.type)
         {
@@ -124,42 +104,89 @@ int detectType() {
     char actionTypes[9][12] = {"start", "reveal", "flag", "state",
                             "remove_flag", "reset", "win", "exit", 
                             "game_over"};
+    printf("> ");
     scanf("%s", buffer);
     for (int i = 0; i < 9; i++)
     {
         if(strcmp(buffer, actionTypes[i]) == 0) {
-            // the action will be the index of the loop
             return i;
         }
     }
     return -1;
+}       
+
+void commandParse(struct action *msg) {
+
+    do {
+        msg->type = detectType();
+        if(msg->type == -1) {printf("error: command not found\n");}
+    } while (msg->type == -1);
+
+    if (msg->type == 1 || msg->type == 2 || msg->type == 3) {
+        scanf("%i,%i", &msg->coordinates[0], &msg->coordinates[1]);
+    }
 }
 
 void printBoard(struct action msg) {
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
-            //printf("%3i\t\t", msg.board[i][j]);
             switch (msg.board[i][j]) {
                 case -1:
-                    printf("*\t\t");
+                    printf("*"); // in case i nedd right alignment -> %3i
                     break;
                 
                 case -2:
-                    printf("-\t\t");
+                    printf("-");
                     break;
 
                 case -3:
-                    printf(">\t\t");
+                    printf(">");
                     break;
                 
                 default:
-                    printf("%i\t\t", msg.board[i][j]);
+                    printf("%i", msg.board[i][j]);
                     break;
             }
-/*             if(i < 3) {
+            if(j != 3) {
                 printf("\t\t");
-            } */
+            }
         }
         printf("\n");
     }
 }
+
+/*
+
+
+printf("error: invalid cell");
+printf("error: cell already revealed");
+printf("error: cell already has a flag");
+printf("error: cannot insert flag in revealed cell");
+
+
+
+
+
+
+
+
+
+
+
+if (msg.coordinates[0] >= 0 && msg.coordinates[0] <= 3)
+    (msg.coordinates[1] >= 0 && msg.coordinates[1] <= 3)
+
+
+
+
+
+
+
+
+
+
+
+
+if (msg.coordinates[0], msg.coordinates[1]))
+if (msg.coordinates[0], msg.coordinates[1]))
+*/

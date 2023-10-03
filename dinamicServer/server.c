@@ -18,11 +18,7 @@ int answer[4][4] = { {1, 2, -1, 1},
                     {1, 2, 1, 1}, 
                     {0, 1, -1, 1}, };
 
-  // init state com todas as células ocultas
-int state[4][4]; /* = { {-2, -2, -2, -2},
-                      {-2, -2, -2, -2}, 
-                      {-2, -2, -2, -2}, 
-                      {-2, -2, -2, -2}, };*/
+int state[4][4];
 
 struct action {
     int type;
@@ -100,19 +96,19 @@ int main(int argc, char **argv) {
         //printf("From client: %s", msg.buf);
         //printf("From client: Your action is: %i\n", msg.type);
         if (msg.type == 1 || msg.type == 2 || msg.type == 3) {
-            printf("From client: Your action is: %i\nAnd your coordinates are: %i,%i\n", msg.type, msg.coordinates[0], msg.coordinates[1]);
+            printf("From client: Your action is: %i\n\tAnd your coordinates are: %i,%i\n", msg.type, msg.coordinates[0], msg.coordinates[1]);
         } else {
             printf("From client: Your action is: %i\n", msg.type);
 
         }
-        
+/*         
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
                 printf("%i\t\t", answer[i][j]);
             }
             printf("\n");
         }
-        
+         */
         
         int cell_value;
         switch (msg.type) {
@@ -194,6 +190,7 @@ int main(int argc, char **argv) {
 
         if(msg.type == 7) {
             close(csock);
+            break; // closes the server, dont want that
         }
 
 /* 
@@ -219,8 +216,10 @@ int main(int argc, char **argv) {
 void printBoard(struct action msg) {
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
-            printf("%i\t\t", msg.board[i][j]);
+            printf("%3.i\t\t", msg.board[i][j]);
         }
         printf("\n");
     }
 }
+
+// SE O CLIENT QUITA O SERVER CAI, MAS SE O SERVER QUITA O CLIENT N
