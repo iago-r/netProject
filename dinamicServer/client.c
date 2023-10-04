@@ -66,7 +66,8 @@ int main(int argc, char **argv) {
         bzero(&msg.coordinates, sizeof(msg.coordinates));
         recv(s, &msg, sizeof(msg), 0);
         actionResultParse(&msg);
-        memcpy(previous_state, msg.board, sizeof(msg.board));       
+        memcpy(previous_state, msg.board, sizeof(msg.board));
+
         if (EXIT_STATE == 1) {
             break;
         }
@@ -75,10 +76,10 @@ int main(int argc, char **argv) {
     exit(EXIT_SUCCESS);
 }
 
-void resetPreviousState(){
+void resetPreviousState() {
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
-        previous_state[i][j] = -2;
+            previous_state[i][j] = -2;
         }
     }
 }
@@ -86,18 +87,17 @@ void resetPreviousState(){
 int detectType() {
     char buffer[BUFSZ];
     char actionTypes[9][15] = {"start", "reveal", "flag", "state",
-                            "remove_flag", "reset", "win", "exit", 
-                            "game_over"};
-    printf("> ");
+                               "remove_flag", "reset", "win", "exit",
+                               "game_over"};
+    //printf("> ");
     scanf("%s", buffer);
-    for (int i = 0; i < 9; i++)
-    {
-        if(strcmp(buffer, actionTypes[i]) == 0) {
+    for (int i = 0; i < 9; i++) {
+        if (strcmp(buffer, actionTypes[i]) == 0) {
             return i;
         }
     }
     return -1;
-}       
+}
 
 int commandParse(struct action *msg) {
 
@@ -109,7 +109,8 @@ int commandParse(struct action *msg) {
         // USER PROMPT...............................................................
         msg->type = detectType();
         if (msg->type == 1 || msg->type == 2 || msg->type == 3) {
-            scanf("%i,%i", &msg->coordinates[0], &msg->coordinates[1]);}
+            scanf("%i,%i", &msg->coordinates[0], &msg->coordinates[1]);
+        }
 
         // COMMAND CHECK.............................................................
         if (msg->type == -1) {
@@ -118,20 +119,21 @@ int commandParse(struct action *msg) {
         }
         else if (msg->type == 1) {
             if (!((msg->coordinates[0] >= 0 && msg->coordinates[0] <= 3) &&
-                (msg->coordinates[1] >= 0 && msg->coordinates[1] <= 3))) {
+                  (msg->coordinates[1] >= 0 && msg->coordinates[1] <= 3))) {
                 printf("error: invalid cell\n");
                 valid_command = 0;
             }
             else if (previous_state[msg->coordinates[0]][msg->coordinates[1]] >= 0) {
                 printf("error: cell already revealed\n");
                 valid_command = 0;
-            }       
+            }
         }
         else if (msg->type == 2) {
             if (previous_state[msg->coordinates[0]][msg->coordinates[1]] == -3) {
                 printf("error: cell already has a flag\n");
                 valid_command = 0;
-            } else if (previous_state[msg->coordinates[0]][msg->coordinates[1]] >= 0) {
+            }
+            else if (previous_state[msg->coordinates[0]][msg->coordinates[1]] >= 0) {
                 printf("error: cannot insert flag in revealed cell\n");
                 valid_command = 0;
             }
@@ -147,23 +149,23 @@ void printBoard(struct action msg) {
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
             switch (msg.board[i][j]) {
-                case -1:
-                    printf("*"); // in case i nedd right alignment -> %3i
-                    break;
-                
-                case -2:
-                    printf("-");
-                    break;
+            case -1:
+                printf("*"); // in case i nedd right alignment -> %3i
+                break;
 
-                case -3:
-                    printf(">");
-                    break;
-                
-                default:
-                    printf("%i", msg.board[i][j]);
-                    break;
+            case -2:
+                printf("-");
+                break;
+
+            case -3:
+                printf(">");
+                break;
+
+            default:
+                printf("%i", msg.board[i][j]);
+                break;
             }
-            if(j != 3) {
+            if (j != 3) {
                 printf("\t\t");
             }
         }
@@ -173,22 +175,21 @@ void printBoard(struct action msg) {
 
 void actionResultParse(struct action *msg) {
     switch (msg->type) {
-        // SERVER.........................state
-        case 3:
-            printBoard(*msg);
-            break;
+    // SERVER.........................state
+    case 3:
+        printBoard(*msg);
+        break;
 
-        // SERVER..........................win
-        case 6:
-            printf("YOU WIN!\n");
-            printBoard(*msg);
-            break;
-        
-        // SERVER....................game_over
-        case 8:
-            printf("GAME OVER!\n");
-            printBoard(*msg);
-            break;
+    // SERVER..........................win
+    case 6:
+        printf("YOU WIN!\n");
+        printBoard(*msg);
+        break;
+
+    // SERVER....................game_over
+    case 8:
+        printf("GAME OVER!\n");
+        printBoard(*msg);
+        break;
     }
 }
-
