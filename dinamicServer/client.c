@@ -57,11 +57,13 @@ int main(int argc, char **argv) {
     struct action msg;
     resetPreviousState();
     while (1) {
+        //SENDING PACKAGE...............................................
         bzero(&msg.type, sizeof(msg.type));
         bzero(&msg.coordinates, sizeof(msg.coordinates));
         EXIT_STATE = commandParse(&msg);
         send(s, &msg, sizeof(msg), 0);
 
+        //RECEIVING PACKAGE.............................................
         bzero(&msg.type, sizeof(msg.type));
         bzero(&msg.coordinates, sizeof(msg.coordinates));
         recv(s, &msg, sizeof(msg), 0);
@@ -108,7 +110,7 @@ int commandParse(struct action *msg) {
 
         // USER PROMPT...............................................................
         msg->type = detectType();
-        if (msg->type == 1 || msg->type == 2 || msg->type == 3) {
+        if (msg->type == 1 || msg->type == 2 || msg->type == 3 || msg->type == 4) {
             scanf("%i,%i", &msg->coordinates[0], &msg->coordinates[1]);
         }
 
