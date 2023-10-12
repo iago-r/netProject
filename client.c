@@ -22,7 +22,7 @@ int previous_state[4][4];
 int EXIT_STATE = 0;
 
 void usage(int argc, char **argv);
-void startGameState();
+void startGameBoard();
 int detectType();
 void printBoard(struct action msg);
 int commandParse(struct action *msg);
@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
     }
 
     struct action msg;
-    startGameState();
+    startGameBoard();
     while (1) {
         //SENDING PACKAGE...............................................
         bzero(&msg.type, sizeof(msg.type));
@@ -79,7 +79,7 @@ void usage(int argc, char **argv) {
     exit(EXIT_FAILURE);
 }
 
-void startGameState() {
+void startGameBoard() {
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
             previous_state[i][j] = -2;
@@ -111,15 +111,15 @@ int commandParse(struct action *msg) {
 
         // USER PROMPT...............................................................
         msg->type = detectType();
-        if (msg->type == 1 || msg->type == 2 || msg->type == 3 || msg->type == 4) {
+        if (msg->type == 1 || msg->type == 2 || msg->type == 4) {
             scanf("%i,%i", &msg->coordinates[0], &msg->coordinates[1]);
         }
 
         // COMMAND CHECK.............................................................
-        if (msg->type == -1) {
+        if (msg->type == -1 || msg->type == 3 || msg->type == 6 ||msg->type == 8) {
             printf("error: command not found\n");
             valid_command = 0;
-        }
+        }      
         else if (msg->type == 1) {
             if (!((msg->coordinates[0] >= 0 && msg->coordinates[0] <= 3) &&
                   (msg->coordinates[1] >= 0 && msg->coordinates[1] <= 3))) {
