@@ -13,36 +13,23 @@
 int GAME_INITIALIZED = 0; // 0 for no and 1 for yes
 int PLAYER_STATE = 0; // 0 for not losing and 1 for lose
 
-int answer[4][4] = { {1, 2, -1, 1},
-                    {1, -1, 2, 1}, 
-                    {1, 2, 1, 1}, 
-                    {0, 1, -1, 1}, };
-
-int state[4][4];
-
-int countNoBombCells(int answer[4][4]);
-
 struct action {
     int type;
     int coordinates[2];
     int board[4][4];
     char buf[BUFSZ];
 };
-void printBoard(struct action msg) ;
 
-void resetGameState(){
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-        state[i][j] = -2;
-        }
-    }
-}
+int answer[4][4] = { {1, 2, -1, 1},
+                    {1, -1, 2, 1}, 
+                    {1, 2, 1, 1}, 
+                    {0, 1, -1, 1}, };
+int state[4][4];
 
-void usage(int argc, char **argv) {
-    printf("usage: %s <v4|v6> <server port>\n", argv[0]);
-    printf("example: %s v4 51511\n", argv[0]);
-    exit(EXIT_FAILURE);
-}
+void usage(int argc, char **argv);
+void resetGameState();
+int countNoBombCells(int answer[4][4]);
+void printBoard(struct action msg);
 
 int main(int argc, char **argv) {
     if (argc < 3) {
@@ -200,6 +187,13 @@ int main(int argc, char **argv) {
     exit(EXIT_SUCCESS);
 }
 
+void usage(int argc, char **argv) {
+    printf("usage: %s <v4|v6> <server port>\n", argv[0]);
+    printf("example: %s v4 51511\n", argv[0]);
+    exit(EXIT_FAILURE);
+}
+
+
 int countNoBombCells(int answer[4][4]) {
     int counter = 0;
     for (int i = 0; i < 4; i++) {
@@ -210,6 +204,14 @@ int countNoBombCells(int answer[4][4]) {
         }
     }
     return counter;
+}
+
+void resetGameState(){
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+        state[i][j] = -2;
+        }
+    }
 }
 
 void printBoard(struct action msg) {

@@ -21,17 +21,12 @@ struct action {
 int previous_state[4][4];
 int EXIT_STATE = 0;
 
+void usage(int argc, char **argv);
 void resetPreviousState();
 int detectType();
 void printBoard(struct action msg);
 int commandParse(struct action *msg);
 void actionResultParse(struct action *msg);
-
-void usage(int argc, char **argv) {
-    printf("usage %s <server IP> <server port>\n", argv[0]);
-    printf("example: %s 127.0.0.1 51511\n", argv[0]);
-    exit(EXIT_FAILURE);
-}
 
 int main(int argc, char **argv) {
     if (argc < 3) {
@@ -76,6 +71,12 @@ int main(int argc, char **argv) {
     }
     close(s);
     exit(EXIT_SUCCESS);
+}
+
+void usage(int argc, char **argv) {
+    printf("usage %s <server IP> <server port>\n", argv[0]);
+    printf("example: %s 127.0.0.1 51511\n", argv[0]);
+    exit(EXIT_FAILURE);
 }
 
 void resetPreviousState() {
