@@ -20,21 +20,22 @@ struct action {
     char buf[BUFSZ];
 };
 
-int answer[4][4] = { {1, 2, -1, 1},
-                    {1, -1, 2, 1}, 
-                    {1, 2, 1, 1}, 
-                    {0, 1, -1, 1}, };
+int answer[4][4];
 int state[4][4];
 
 void usage(int argc, char **argv);
+int fillGameAnswersBoard(char* argv);
+void parseArgs(int argc, char **argv);
 void resetGameState();
-int countNoBombCells(int answer[4][4]);
-void printBoard(struct action msg);
+int countNoBombCells();
+void printBoard();
 
 int main(int argc, char **argv) {
-    if (argc < 3) {
+    if (argc < 5) {
         usage(argc, argv);
     }
+
+    parseArgs(argc, argv);
 
     struct sockaddr_storage storage;
     if (0 != server_sockaddr_init(argv[1], argv[2], &storage)) {
@@ -78,7 +79,8 @@ int main(int argc, char **argv) {
             printf("client connected\n");
         }
         
-        cellsToReveal = countNoBombCells(answer);
+
+        cellsToReveal = countNoBombCells();
         while(1) {
             bzero(&msg, sizeof(msg));
             recv(csock, &msg, sizeof(msg),0);
@@ -188,13 +190,47 @@ int main(int argc, char **argv) {
 }
 
 void usage(int argc, char **argv) {
-    printf("usage: %s <v4|v6> <server port>\n", argv[0]);
-    printf("example: %s v4 51511\n", argv[0]);
+    printf("usage: %s <v4|v6> <server port> -i input/<filename>.txt\n", argv[0]);
+    printf("example: %s v4 51511 -i input/jogo.txt\n", argv[0]);
     exit(EXIT_FAILURE);
 }
 
+int fillGameAnswersBoard(char* argv) {
+    FILE* fp;
+    if ((fp = fopen(argv, "r")) == NULL)
+    {
+        printf("can't open %s\n", argv);
+        return -1;
+    }
+    else {
+        for (int i = 0; i < 4; i++)
+        {
+            fscanf(fp, "%i,%i,%i,%i", &answer[i][0], &answer[i][1], &answer[i][2], &answer[i][3]);
+        }
+        fclose(fp);      
+        return 0;  
+    }
+}
 
-int countNoBombCells(int answer[4][4]) {
+void parseArgs(int argc, char **argv) {
+    int i;
+    for (i = 0; i < argc; i++) {
+        if(strcmp(argv[i], "-i") == 0) {
+            break;
+        }
+    }
+    if(i == argc) {
+        exit(EXIT_FAILURE);
+    }
+    else {
+        if(fillGameAnswersBoard(argv[i+1]) == -1){
+            exit(EXIT_FAILURE);
+        }
+        printBoard();
+    }
+}
+
+int countNoBombCells() {
     int counter = 0;
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
@@ -206,6 +242,34 @@ int countNoBombCells(int answer[4][4]) {
     return counter;
 }
 
+void printBoard() {
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            switch (answer[i][j]) {
+            case -1:
+                printf("*"); // in case i nedd right alignment -> %3i
+                break;
+
+            case -2:
+                printf("-");
+                break;
+
+            case -3:
+                printf(">");
+                break;
+
+            default:
+                printf("%i", answer[i][j]);
+                break;
+            }
+            if (j != 3) {
+                printf("\t\t");
+            }
+        }
+        printf("\n");
+    }
+}
+
 void resetGameState(){
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
@@ -214,13 +278,7 @@ void resetGameState(){
     }
 }
 
-void printBoard(struct action msg) {
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            printf("%3.i\t\t", msg.board[i][j]);
-        }
-        printf("\n");
-    }
-}
+
+
 
 // SE O CLIENT QUITA O SERVER CAI, MAS SE O SERVER QUITA O CLIENT Nz

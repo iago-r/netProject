@@ -22,7 +22,7 @@ int previous_state[4][4];
 int EXIT_STATE = 0;
 
 void usage(int argc, char **argv);
-void resetPreviousState();
+void startGameState();
 int detectType();
 void printBoard(struct action msg);
 int commandParse(struct action *msg);
@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
     }
 
     struct action msg;
-    resetPreviousState();
+    startGameState();
     while (1) {
         //SENDING PACKAGE...............................................
         bzero(&msg.type, sizeof(msg.type));
@@ -79,7 +79,7 @@ void usage(int argc, char **argv) {
     exit(EXIT_FAILURE);
 }
 
-void resetPreviousState() {
+void startGameState() {
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
             previous_state[i][j] = -2;
