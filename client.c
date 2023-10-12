@@ -19,7 +19,7 @@ struct action {
 };
 
 int previous_state[4][4];
-int EXIT_STATE = 0;
+int GAME_STATE = 0;
 
 void usage(int argc, char **argv);
 void startGameBoard();
@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
         //SENDING PACKAGE...............................................
         bzero(&msg.type, sizeof(msg.type));
         bzero(&msg.coordinates, sizeof(msg.coordinates));
-        EXIT_STATE = commandParse(&msg);
+        GAME_STATE = commandParse(&msg);
         send(s, &msg, sizeof(msg), 0);
 
         //RECEIVING PACKAGE.............................................
@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
         actionResultParse(&msg);
         memcpy(previous_state, msg.board, sizeof(msg.board));
 
-        if (EXIT_STATE == 1) {
+        if (GAME_STATE == 1) {
             break;
         }
     }
@@ -119,14 +119,17 @@ int commandParse(struct action *msg) {
         if (msg->type == -1 || msg->type == 3 || msg->type == 6 ||msg->type == 8) {
             printf("error: command not found\n");
             valid_command = 0;
-        }      
-        else if (msg->type == 1) {
-            if (!((msg->coordinates[0] >= 0 && msg->coordinates[0] <= 3) &&
-                  (msg->coordinates[1] >= 0 && msg->coordinates[1] <= 3))) {
+        }
+        else if ((msg->type == 1 || msg->type == 2 || msg->type == 4) && 
+                (!((msg->coordinates[0] >= 0 && msg->coordinates[0] <= 3) &&
+                  (msg->coordinates[1] >= 0 && msg->coordinates[1] <= 3)))){
+            if (msg->type == 1) {
                 printf("error: invalid cell\n");
-                valid_command = 0;
             }
-            else if (previous_state[msg->coordinates[0]][msg->coordinates[1]] >= 0) {
+            valid_command = 0;
+        }
+        else if (msg->type == 1) {
+            if (previous_state[msg->coordinates[0]][msg->coordinates[1]] >= 0) {
                 printf("error: cell already revealed\n");
                 valid_command = 0;
             }
@@ -153,7 +156,7 @@ void printBoard(struct action msg) {
         for (int j = 0; j < 4; j++) {
             switch (msg.board[i][j]) {
             case -1:
-                printf("*"); // in case i nedd right alignment -> %3i
+                printf("*");
                 break;
 
             case -2:
