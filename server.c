@@ -319,11 +319,11 @@ int commandParse(struct action *msg) {
                     }
                     memcpy(msg->board, state, sizeof(answer));
                 }
-                /* 
-                bzero(&msg, sizeof(msg));
-                msg->type = 3;
-                resetGameState();
-                memcpy(msg.board, state, sizeof(state)); */
+
+                // bzero(&msg, sizeof(msg));
+                // msg->type = 3;
+                // resetGameState();
+                // memcpy(msg.board, state, sizeof(state));
             }
             break;
         
