@@ -18,8 +18,10 @@ struct action {
     char buf[BUFSZ];
 };
 
+int GAME_INITIALIZED = 0;
+int GAME_STATE = 0; // EXIT == -1; STARTED == 1; NOT STARTED == 0;
+
 int previous_state[4][4];
-int GAME_STATE = 0;
 
 void usage(int argc, char **argv);
 void startGameBoard();
@@ -65,7 +67,7 @@ int main(int argc, char **argv) {
         actionResultParse(&msg);
         memcpy(previous_state, msg.board, sizeof(msg.board));
 
-        if (GAME_STATE == 1) {
+        if (GAME_STATE == -1) {
             break;
         }
     }
@@ -120,34 +122,39 @@ int commandParse(struct action *msg) {
             printf("error: command not found\n");
             valid_command = 0;
         }
-        else if ((msg->type == 1 || msg->type == 2 || msg->type == 4) && 
-                (!((msg->coordinates[0] >= 0 && msg->coordinates[0] <= 3) &&
-                  (msg->coordinates[1] >= 0 && msg->coordinates[1] <= 3)))){
-            if (msg->type == 1) {
-                printf("error: invalid cell\n");
-            }
-            valid_command = 0;
-        }
-        else if (msg->type == 1) {
-            if (previous_state[msg->coordinates[0]][msg->coordinates[1]] >= 0) {
-                printf("error: cell already revealed\n");
+        else if (GAME_INITIALIZED == 1) {
+            if ((msg->type == 1 || msg->type == 2 || msg->type == 4) && 
+                    (!((msg->coordinates[0] >= 0 && msg->coordinates[0] <= 3) &&
+                    (msg->coordinates[1] >= 0 && msg->coordinates[1] <= 3)))){
+                if (msg->type == 1) {
+                    printf("error: invalid cell\n");
+                }
                 valid_command = 0;
             }
-        }
-        else if (msg->type == 2) {
-            if (previous_state[msg->coordinates[0]][msg->coordinates[1]] == -3) {
-                printf("error: cell already has a flag\n");
-                valid_command = 0;
+            else if (msg->type == 1) {
+                if (previous_state[msg->coordinates[0]][msg->coordinates[1]] >= 0) {
+                    printf("error: cell already revealed\n");
+                    valid_command = 0;
+                }
             }
-            else if (previous_state[msg->coordinates[0]][msg->coordinates[1]] >= 0) {
-                printf("error: cannot insert flag in revealed cell\n");
-                valid_command = 0;
+            else if (msg->type == 2) {
+                if (previous_state[msg->coordinates[0]][msg->coordinates[1]] == -3) {
+                    printf("error: cell already has a flag\n");
+                    valid_command = 0;
+                }
+                else if (previous_state[msg->coordinates[0]][msg->coordinates[1]] >= 0) {
+                    printf("error: cannot insert flag in revealed cell\n");
+                    valid_command = 0;
+                }
             }
         }
         else if (msg->type == 7) {
-            return 1;
+            return -1;
         }
     } while (valid_command == 0);
+    if (msg->type == 0 || msg->type == 5) {
+        GAME_INITIALIZED = 1;
+    }
     return 0;
 }
 
@@ -180,22 +187,26 @@ void printBoard(struct action msg) {
 }
 
 void actionResultParse(struct action *msg) {
-    switch (msg->type) {
-    // SERVER.........................state
-    case 3:
-        printBoard(*msg);
-        break;
+    if (GAME_INITIALIZED == 1) {
+        switch (msg->type) {
+            // SERVER.........................state
+            case 3:
+                printBoard(*msg);
+                break;
 
-    // SERVER..........................win
-    case 6:
-        printf("YOU WIN!\n");
-        printBoard(*msg);
-        break;
+            // SERVER..........................win
+            case 6:
+                printf("YOU WIN!\n");
+                printBoard(*msg);
+                GAME_INITIALIZED = 0;
+                break;
 
-    // SERVER....................game_over
-    case 8:
-        printf("GAME OVER!\n");
-        printBoard(*msg);
-        break;
+            // SERVER....................game_over
+            case 8:
+                printf("GAME OVER!\n");
+                printBoard(*msg);
+                GAME_INITIALIZED = 0;
+                break;
+        }
     }
 }
