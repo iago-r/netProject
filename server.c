@@ -182,7 +182,7 @@ int main(int argc, char **argv) {
             }
             
             
-            send(csock, &msg, sizeof(msg),0);
+            send(csock, &msg, sizeof(msg), 0);
             if (msg.type ==  7) {
                 printf("client disconnected\n");
                 break;
