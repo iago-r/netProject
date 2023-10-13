@@ -31,7 +31,6 @@ void parseArgs(int argc, char **argv);
 void resetGameState();
 int countNoBombCells();
 void printBoard();
-
 void commandParse(struct action *msg);
 
 int main(int argc, char **argv) {
@@ -72,7 +71,6 @@ int main(int argc, char **argv) {
 
     int csock;
     struct action msg;
-    
     
     while (1) {
         csock = accept(s, caddr, &caddrlen);
@@ -205,12 +203,12 @@ void resetGameState(){
 
 void commandParse(struct action *msg) {
 
-    int *cell_answer, *state_of_selected_cell;
+    int *answer_cell, *revealing_cell;
     if (msg->type == 1) {
-        cell_answer = &answer[msg->coordinates[0]][msg->coordinates[1]];
+        answer_cell = &answer[msg->coordinates[0]][msg->coordinates[1]];
     }
     if (msg->type == 1 || msg->type == 2 || msg->type == 4) {
-        state_of_selected_cell = &state[msg->coordinates[0]][msg->coordinates[1]];
+        revealing_cell = &state[msg->coordinates[0]][msg->coordinates[1]];
     }
 
     switch (msg->type) {
@@ -232,21 +230,24 @@ void commandParse(struct action *msg) {
 
         // CLIENT....................reveal [int],[int]
         case 1:
-            if (GAME_INITIALIZED == 1 && *state_of_selected_cell == -2) {
-                if (*cell_answer == -1) {
+            if (GAME_INITIALIZED == 1 && *revealing_cell == -2) {
+                if (*answer_cell == -1) {
                     msg->type = 8;
                     memcpy(msg->board, answer, sizeof(answer));
+                    resetGameState();
                 }
                 else {
-                    *state_of_selected_cell = *cell_answer;
+                    *revealing_cell = *answer_cell;
                     CELLS_TO_REVEAL--;
                     if (CELLS_TO_REVEAL == 0) {
                         msg->type = 6;
+                        memcpy(msg->board, answer, sizeof(answer));
+                        resetGameState();
                     }
                     else {
                         msg->type = 3;
+                        memcpy(msg->board, state, sizeof(state));
                     }
-                    memcpy(msg->board, state, sizeof(state));
                 }
             }
             break;
@@ -254,8 +255,8 @@ void commandParse(struct action *msg) {
         // CLIENT....................flag [int],[int]
         case 2:
             if (GAME_INITIALIZED == 1 &&
-                *state_of_selected_cell == -2) { // cell not revealed or 
-                    *state_of_selected_cell = -3;
+                *revealing_cell == -2) { // cell not revealed or 
+                    *revealing_cell = -3;
                 }
             msg->type = 3;
             memcpy(msg->board, state, sizeof(state));             
@@ -264,8 +265,8 @@ void commandParse(struct action *msg) {
         // CLIENT....................remove_flag [int],[int]
         case 4:
             if (GAME_INITIALIZED == 1 &&
-                *state_of_selected_cell == -3) { // cell not revealed or 
-                    *state_of_selected_cell = -2;
+                *revealing_cell == -3) { // cell not revealed or 
+                    *revealing_cell = -2;
                 }
             msg->type = 3;
             memcpy(msg->board, state, sizeof(state));             

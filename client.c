@@ -19,7 +19,7 @@ struct action {
 };
 
 int GAME_INITIALIZED = 0;
-int GAME_STATE = 0; // EXIT == -1; STARTED == 1; NOT STARTED == 0;
+int STATE = 0; // EXIT == -1; GAME OVER == 0; GAME ON GOING == 1;
 
 int previous_state[4][4];
 
@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
         //SENDING PACKAGE...............................................
         bzero(&msg.type, sizeof(msg.type));
         bzero(&msg.coordinates, sizeof(msg.coordinates));
-        GAME_STATE = commandParse(&msg);
+        STATE = commandParse(&msg);
         send(s, &msg, sizeof(msg), 0);
 
         //RECEIVING PACKAGE.............................................
@@ -67,7 +67,8 @@ int main(int argc, char **argv) {
         actionResultParse(&msg);
         memcpy(previous_state, msg.board, sizeof(msg.board));
 
-        if (GAME_STATE == -1) {
+        // EXIT........................................................
+        if (STATE == -1) {
             break;
         }
     }
@@ -98,8 +99,11 @@ int detectType() {
     scanf("%s", buffer);
     for (int i = 0; i < 9; i++) {
         if (strcmp(buffer, actionTypes[i]) == 0) {
+            if (i == 3 || i == 6 || i == 8) {
+                return -1;
+            }
             return i;
-        }
+        }        
     }
     return -1;
 }
@@ -117,12 +121,29 @@ int commandParse(struct action *msg) {
             scanf("%i,%i", &msg->coordinates[0], &msg->coordinates[1]);
         }
 
-        // COMMAND CHECK.............................................................
-        if (msg->type == -1 || msg->type == 3 || msg->type == 6 ||msg->type == 8) {
+        // PRE-COMMANDs CHECK........................................................
+        if (msg->type == -1) {                                   
             printf("error: command not found\n");
             valid_command = 0;
         }
-        else if (GAME_INITIALIZED == 1) {
+        else if (msg->type == 0) {
+            if (GAME_INITIALIZED == 0) {                        // starting game
+                GAME_INITIALIZED = 1;
+            }
+            else {
+                valid_command = 0;
+            }                              // starting game
+        }
+        else if (msg->type == 5 && GAME_INITIALIZED == 0) {     // reseting game
+            valid_command = 0;
+        } 
+        else if (msg->type == 7) {                              // exiting game
+            return -1;
+        }
+        else if (GAME_INITIALIZED == 0) {   // checking if the game has started 
+            valid_command = 0;
+        }
+        else {
             if ((msg->type == 1 || msg->type == 2 || msg->type == 4) && 
                     (!((msg->coordinates[0] >= 0 && msg->coordinates[0] <= 3) &&
                     (msg->coordinates[1] >= 0 && msg->coordinates[1] <= 3)))){
@@ -148,13 +169,8 @@ int commandParse(struct action *msg) {
                 }
             }
         }
-        else if (msg->type == 7) {
-            return -1;
-        }
     } while (valid_command == 0);
-    if (msg->type == 0 || msg->type == 5) {
-        GAME_INITIALIZED = 1;
-    }
+
     return 0;
 }
 
@@ -186,6 +202,7 @@ void printBoard(struct action msg) {
     }
 }
 
+//void actionResultParse(struct action *msg) {
 void actionResultParse(struct action *msg) {
     if (GAME_INITIALIZED == 1) {
         switch (msg->type) {
@@ -198,14 +215,12 @@ void actionResultParse(struct action *msg) {
             case 6:
                 printf("YOU WIN!\n");
                 printBoard(*msg);
-                GAME_INITIALIZED = 0;
                 break;
 
             // SERVER....................game_over
             case 8:
                 printf("GAME OVER!\n");
                 printBoard(*msg);
-                GAME_INITIALIZED = 0;
                 break;
         }
     }
