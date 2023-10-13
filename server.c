@@ -31,7 +31,6 @@ void parseArgs(int argc, char **argv);
 void resetGameState();
 int countNoBombCells();
 void printBoard();
-int commandParse(struct action *msg);
 
 int main(int argc, char **argv) {
     if (argc < 5) {
@@ -138,11 +137,11 @@ int main(int argc, char **argv) {
                             }
                             memcpy(msg.board, state, sizeof(answer));
                         }
-                        /* 
-                        bzero(&msg, sizeof(msg));
-                        msg.type = 3;
-                        resetGameState();
-                        memcpy(msg.board, state, sizeof(state)); */
+
+                        // bzero(&msg, sizeof(msg));
+                        // msg.type = 3;
+                        // resetGameState();
+                        // memcpy(msg.board, state, sizeof(state));
                     }
                     break;
                 
@@ -279,90 +278,6 @@ void resetGameState(){
         state[i][j] = -2;
         }
     }
-}
-
-
-int commandParse(struct action *msg) {
-    switch (msg->type) {
-        // CLIENT....................START
-        case 0:
-            if (GAME_INITIALIZED == 0 && PLAYER_STATE == 0) {
-                GAME_INITIALIZED = 1;
-                bzero(&msg, sizeof(msg));
-                resetGameState();
-            }
-            msg->type = 3;
-            memcpy(msg->board, state, sizeof(state));
-            break;
-        
-        // CLIENT....................reveal [int],[int]
-        case 1:
-            if (GAME_INITIALIZED == 1 && state[msg->coordinates[0]][msg->coordinates[1]] == -2) {
-                cell_value = answer[msg->coordinates[0]][msg->coordinates[1]];
-                //printf("%i", cell_value);
-                if (cell_value == -1) {
-                    //bzero(&msg, sizeof(msg));
-                    msg->type = 8;
-                    memcpy(msg->board, answer, sizeof(answer));
-                    GAME_INITIALIZED = 0;
-                    PLAYER_STATE = 1;
-                    resetGameState();
-                }
-                else {
-                    state[msg->coordinates[0]][msg->coordinates[1]] = answer[msg->coordinates[0]][msg->coordinates[1]];
-                    cellsToReveal--;
-                    if (cellsToReveal == 0) {
-                        msg->type = 6;
-                    }
-                    else {
-                        msg->type = 3;
-                    }
-                    memcpy(msg->board, state, sizeof(answer));
-                }
-
-                // bzero(&msg, sizeof(msg));
-                // msg->type = 3;
-                // resetGameState();
-                // memcpy(msg.board, state, sizeof(state));
-            }
-            break;
-        
-        // CLIENT....................flag [int],[int]
-        case 2:
-            if (GAME_INITIALIZED == 1 &&
-                state[msg->coordinates[0]][msg->coordinates[1]] == -2) { // cell not revealed or 
-                    state[msg->coordinates[0]][msg->coordinates[1]] = -3;
-                }
-            msg->type = 3;
-            memcpy(msg->board, state, sizeof(state));             
-            break;
-        
-        // DANDO PAU! O STRCMP NÃO DETECTA A FUNCAO REMOVE_FLAG DA LISTA E RETORNA -1
-        // CLIENT....................remove_flag [int],[int]
-        case 4:
-            if (GAME_INITIALIZED == 1 &&
-                state[msg->coordinates[0]][msg->coordinates[1]] == -3) { // cell not revealed or 
-                    state[msg->coordinates[0]][msg->coordinates[1]] = -2;
-                }
-            msg->type = 3;
-            memcpy(msg->board, state, sizeof(state));             
-            break;
-
-        // CLIENT....................reset
-        case 5:
-            printf("starting new game\n");
-            msg->type = 3;
-            resetGameState();
-            memcpy(msg->board, state, sizeof(answer));
-            GAME_INITIALIZED = 0;
-            PLAYER_STATE = 0;
-            break;
-        
-        // CLIENT....................exit
-        case 7:
-            break;
-    }
-    return 0;
 }
 
 // SE O CLIENT QUITA O SERVER CAI, MAS SE O SERVER QUITA O CLIENT Nz
